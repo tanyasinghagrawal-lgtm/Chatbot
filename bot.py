@@ -50,7 +50,7 @@ GEMINI_KEYS_B64 = [
 ]
 
 # Models
-CHAT_MODEL = "gemini-3.6-flash-lite"
+CHAT_MODEL = "gemini-3.5-flash-lite"
 MODERATION_MODEL = "gemini-3.1-flash-lite"
 
 # RAM History (Group Context ke liye last 16 messages)
