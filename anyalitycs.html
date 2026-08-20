@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanya Bot Analytics 📊</title>
+    <!-- ApexCharts CDN for Advanced Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --bg-light-yellow: #fffdf2;
+            --bg-light-pink: #fff5f8;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-dark: #4a4a4a;
+            --shadow: 0 8px 32px 0 rgba(255, 133, 162, 0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light-yellow) 0%, var(--bg-light-pink) 100%);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #d4a017;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        select, button {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid #ffb6c1;
+            padding: 10px 15px;
+            border-radius: 12px;
+            color: #d4a017;
+            font-weight: bold;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+
+        select:hover, button:hover {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 10px rgba(255, 182, 193, 0.4);
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            min-height: 350px;
+        }
+
+        #loader {
+            text-align: center;
+            font-weight: bold;
+            color: #ff85a2;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✨ Analytics Dashboard ✨</h1>
+
+    <div class="glass-panel controls">
+        <select id="timeRange" onchange="processAndRenderData()">
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d" selected>Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="this_year">This Year</option>
+            <option value="last_year">Last Year</option>
+            <option value="all">All Time</option>
+        </select>
+
+        <select id="granularity" onchange="processAndRenderData()">
+            <option value="hour">By Hour</option>
+            <option value="day" selected>By Day</option>
+        </select>
+        
+        <button onclick="fetchData()">🔄 Refresh</button>
+    </div>
+
+    <div id="loader">Fetching and crunching data... ⏳</div>
+
+    <!-- Master Curve Graph -->
+    <div class="glass-panel">
+        <h3 style="margin-top:0; color: #ff85a2;">📈 Master Trend (Curves)</h3>
+        <div id="masterChart" class="chart-wrapper"></div>
+    </div>
+
+    <!-- Heatmaps -->
+    <div class="glass-panel">
+        <h3 style="margin-top:0; color: #ff85a2;">🔥 24hr Activity Heatmap</h3>
+        <div id="heatmapChart" class="chart-wrapper" style="min-height: 250px;"></div>
+    </div>
+
+</div>
+
+<script>
+    let rawData = [];
+    let masterChartInstance = null;
+    let heatmapChartInstance = null;
+
+    // Slab (0-287) ko HH:MM format me badalna
+    function slabToTime(slab) {
+        let mins = slab * 5;
+        let h = Math.floor(mins / 60).toString().padStart(2, '0');
+        return `${h}:00`; // Simplify heatmap labeling by rounding to hour
+    }
+
+    async function fetchData() {
+        document.getElementById('loader').style.display = 'block';
+        try {
+            const response = await fetch('/api/get_anyalitycs_data');
+            const result = await response.json();
+            if (result.status === 'success') {
+                rawData = result.data;
+                processAndRenderData();
+            } else {
+                alert("Error fetching data!");
+            }
+        } catch (error) {
+            alert("Network error!");
+        }
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    function processAndRenderData() {
+        if(rawData.length === 0) return;
+
+        const range = document.getElementById('timeRange').value;
+        const gran = document.getElementById('granularity').value;
+        
+        let filteredData = [...rawData];
+        const now = new Date();
+
+        // 1. Filter by Time Range
+        if(range !== 'all') {
+            let cutoff = new Date();
+            if(range === '24h') cutoff.setHours(now.getHours() - 24);
+            else if(range === '7d') cutoff.setDate(now.getDate() - 7);
+            else if(range === '30d') cutoff.setDate(now.getDate() - 30);
+            else if(range === 'this_year') cutoff = new Date(now.getFullYear(), 0, 1);
+            else if(range === 'last_year') {
+                cutoff = new Date(now.getFullYear() - 1, 0, 1);
+                let endLastYear = new Date(now.getFullYear(), 0, 1);
+                filteredData = filteredData.filter(d => new Date(d.date) < endLastYear);
+            }
+            
+            filteredData = filteredData.filter(d => new Date(d.date) >= cutoff);
+        }
+
+        // 2. Group by Granularity (Hour or Day)
+        let grouped = {};
+        filteredData.forEach(row => {
+            let key;
+            if(gran === 'day') {
+                key = row.date;
+            } else { // hour
+                let hourStr = slabToTime(row.slab).split(':')[0];
+                key = `${row.date} ${hourStr}:00`;
+            }
+
+            if(!grouped[key]) grouped[key] = { page_views: 0, ad_clicks: 0, dm_chats: 0 };
+            grouped[key].page_views += row.page_views;
+            grouped[key].ad_clicks += row.ad_clicks;
+            grouped[key].dm_chats += row.dm_chats;
+        });
+
+        // Prepare Arrays for Charts
+        let labels = Object.keys(grouped).sort();
+        let views = [], clicks = [], dms = [], ctrs = [];
+
+        labels.forEach(k => {
+            let g = grouped[k];
+            views.push(g.page_views);
+            clicks.push(g.ad_clicks);
+            dms.push(g.dm_chats);
+            // CTR = (Clicks / Views) * 100
+            let ctr = g.page_views > 0 ? ((g.ad_clicks / g.page_views) * 100).toFixed(2) : 0;
+            ctrs.push(ctr);
+        });
+
+        renderMasterChart(labels, views, clicks, dms, ctrs);
+        renderHeatmap(filteredData);
+    }
+
+    function renderMasterChart(labels, views, clicks, dms, ctrs) {
+        if(masterChartInstance) masterChartInstance.destroy();
+
+        var options = {
+            series: [
+                { name: 'DM Chats', type: 'line', data: dms },
+                { name: 'Page Views', type: 'line', data: views },
+                { name: 'Ad Clicks', type: 'line', data: clicks },
+                { name: 'CTR (%)', type: 'line', data: ctrs }
+            ],
+            chart: { height: 400, type: 'line', background: 'transparent', toolbar: { show: true } },
+            stroke: { curve: 'smooth', width: 3 }, // Master curves smooth effect
+            colors: ['#00E396', '#008FFB', '#FEB019', '#FF4560'],
+            xaxis: { categories: labels, tickAmount: 10 },
+            yaxis: [
+                { title: { text: "Count (Views/Clicks/DMs)" } },
+                { show: false }, { show: false }, // Sync scale for first 3
+                { opposite: true, title: { text: "CTR Percentage (%)" }, max: 100 }
+            ],
+            tooltip: { shared: true, intersect: false },
+            theme: { mode: 'light' }
+        };
+
+        masterChartInstance = new ApexCharts(document.querySelector("#masterChart"), options);
+        masterChartInstance.render();
+    }
+
+    function renderHeatmap(data) {
+        if(heatmapChartInstance) heatmapChartInstance.destroy();
+
+        // 24hr format grouping
+        let hourMap = {};
+        for(let i=0; i<24; i++) hourMap[i.toString().padStart(2, '0')+':00'] = 0;
+
+        data.forEach(row => {
+            let hourStr = slabToTime(row.slab).split(':')[0] + ':00';
+            // Combine all activity for general heat, or you can pick one metric
+            hourMap[hourStr] += (row.dm_chats + row.page_views + row.ad_clicks);
+        });
+
+        let heatSeries = [{
+            name: "Activity Level",
+            data: Object.keys(hourMap).map(k => { return { x: k, y: hourMap[k] } })
+        }];
+
+        var options = {
+            series: heatSeries,
+            chart: { height: 250, type: 'heatmap', background: 'transparent', toolbar: {show: false} },
+            plotOptions: {
+                heatmap: {
+                    shadeIntensity: 0.5,
+                    radius: 8, // Circular/Rounded blocks
+                    useFillColorAsStroke: false,
+                    colorScale: {
+                        ranges: [
+                            { from: 0, to: 0, color: '#ffeaef', name: 'None' },
+                            { from: 1, to: 20, color: '#ffc2d1', name: 'Low' },
+                            { from: 21, to: 100, color: '#ff85a2', name: 'Medium' },
+                            { from: 101, to: 10000, color: '#ff4d6d', name: 'High' }
+                        ]
+                    }
+                }
+            },
+            dataLabels: { enabled: false },
+            stroke: { width: 1 }
+        };
+
+        heatmapChartInstance = new ApexCharts(document.querySelector("#heatmapChart"), options);
+        heatmapChartInstance.render();
+    }
+
+    // Load data on start
+    window.onload = fetchData;
+</script>
+
+</body>
+</html>
