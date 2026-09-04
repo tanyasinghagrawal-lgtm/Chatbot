@@ -25,7 +25,7 @@ from pydantic import BaseModel
 IST = timezone(timedelta(hours=5, minutes=30))
 analytics_data = {"page_views": 0, "ad_clicks": 0, "dm_chats": 0}
 # ----------------- CONFIGURATIONS ----------------- #
-BOT_TOKEN = "8506217838:AAH3yykRcn2YCPifgZgZ_31Euhh59URlqso"
+BOT_TOKEN = "8506217838:AAGhntZXmH5YvYWDINhwsCvTml1btw4Ed0A"
 TARGET_GROUP_ID = -1003684715733
 # Naya Render URL (webhook route ke sath)
 WEBHOOK_URL = "https://expert-octo-adventure.onrender.com/webhook"
