@@ -69,15 +69,15 @@ GEMINI_KEYS_B64 = [
 CHAT_MODEL = "gemma-4-26b-a4b-it"
 
 # Economy & Guardrail Limits
-MAX_ROB_AMOUNT = 5000         # Maximum coins stolen per heist
-MAX_SEND_AMOUNT = 10000       # Maximum coins transferred in a single command
+MAX_ROB_AMOUNT = 50000         # Maximum coins stolen per heist
+MAX_SEND_AMOUNT = 100000       # Maximum coins transferred in a single command
 DAILY_BONUS_MIN = 250
 DAILY_BONUS_MAX = 500
 PROTECT_COST_PER_DAY = 200
 TRANSFER_FEE_PERCENT = 0.05
 DM_CHAT_REWARD = 20
 GROUP_CHAT_REWARD = 30
-ROB_COOLDOWN_SECONDS = 1200   # 20 minutes cooldown
+ROB_COOLDOWN_SECONDS = 10   # 20 cooldown
 
 # System Prompts
 GROUP_SYSTEM_PROMPT = (
