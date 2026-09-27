@@ -66,7 +66,7 @@ GEMINI_KEYS_B64 = [
     "QUl6YVN5Qi1EbjNCdlE1bUhxT192MUFFNlphWTRQYy1jS2pNSFhN"
 ]
 
-CHAT_MODEL = "gemma-4-31b-it"
+CHAT_MODEL = "gemini-flash-lite-latest"
 
 # Economy & Guardrail Limits
 MAX_ROB_AMOUNT = 5000         # Maximum coins stolen per heist
