@@ -1268,7 +1268,7 @@ async def cmd_rob(update: Update, context: CallbackContext):
 
                 r_bal = await conn.fetchval("SELECT balance FROM users WHERE user_id = $1 FOR UPDATE;", robber.id) or 250
 
-                success = random.random() < 0.48
+                success = True
                 rob_cooldowns[robber.id] = now_ts
 
                 if success:
