@@ -4768,15 +4768,18 @@ fastapi_app = FastAPI(lifespan=lifespan)
 
 @fastapi_app.post("/webhook")
 async def telegram_webhook(request: Request):
-    """Processes incoming Telegram updates asynchronously."""
+    """Processes incoming Telegram updates asynchronously in the background."""
     try:
         update_data = await request.json()
         update = Update.de_json(update_data, ptb_app.bot)
         if update:
-            await ptb_app.process_update(update)
+            # Task ko background me daal diya taaki 200 OK turant chala jaye
+            asyncio.create_task(ptb_app.process_update(update))
     except Exception as e:
         logger.error(f"Error processing webhook update: {e}", exc_info=True)
-    return Response(content='{"status":"ok"}', media_type="application/json")
+    
+    # Telegram ko instantly 200 OK response mil jayega
+    return Response(content='{"status":"ok"}', status_code=200, media_type="application/json")
 @fastapi_app.get("/ping")
 async def health_ping():
     """Health check endpoint for the self-pinger."""
