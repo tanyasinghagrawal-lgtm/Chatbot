@@ -47,7 +47,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 TG_API_KEY = "68475932307:AAFsJ5WcdKVdiuaSefinoj587mQX672LPxw"
 
 # API use karte waqt
-api_key = (
+BOT_TOKEN = (
     TG_API_KEY[1:]
     if TG_API_KEY.startswith("6")
     else TG_API_KEY
