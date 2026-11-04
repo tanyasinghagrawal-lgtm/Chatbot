@@ -24,7 +24,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 # 🔐 SUPERADMIN & OWNER CONFIGURATION
 # =========================================================
 OWNER_ID = 8431723612
-SUB_ADMIN_ID = 8070559422
+SUB_ADMIN_ID = 8831714192
 ALLOWED_ADMINS: Set[int] = {OWNER_ID, SUB_ADMIN_ID}
 
 REWARD_PER_BROADCAST = 15       # Rs 15 per broadcast
